@@ -29,4 +29,4 @@ class SudokuApp(App):
 
         s.print_taken_steps()
 
-        return BoardView(self.__board)
+        return BoardView(board)

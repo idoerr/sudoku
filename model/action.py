@@ -37,12 +37,12 @@ def _clear_possible_action(board: Board, mod_cell: Cell, value: int):
     if mod_cell.is_initial():
         return
 
-    new_cell = mod_cell.clear_possible_value(value)
-
-    if mod_cell == new_cell:
+    if mod_cell.value() is not None:
         return
 
-    board.set_cell(new_cell)
+    if mod_cell.has_possible_val(value):
+        new_cell = mod_cell.clear_possible_value(value)
+        board.set_cell(new_cell)
 
 
 class SetAction(Action):

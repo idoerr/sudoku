@@ -114,6 +114,9 @@ class Cell:
     def possible_vals(self) -> Set[int]:
         return self.__poss_vals.copy()
 
+    def has_possible_val(self, test_val: int) -> bool:
+        return test_val in self.__poss_vals
+
     def display_possible_vals(self) -> List[str]:
         return [self.val_to_chr(x) for x in self.__poss_vals]
 
@@ -139,6 +142,9 @@ class Cell:
         if self.__value == value:
             return self
 
+        if self.__value is None and value not in self.__poss_vals:
+            return self
+
         return Cell(self.__max_val, self.__x, self.__y, is_initial=is_initial, cur_val=value)
 
     def clear_value(self, board: Board) -> Cell:
@@ -159,7 +165,8 @@ class Cell:
         if value in self.__poss_vals:
             return self
 
-        new_cell = copy.deepcopy(self)
+        new_cell = Cell(self.__max_val, self.__x, self.__y, poss_vals=self.__poss_vals.copy())
+        #new_cell = copy.deepcopy(self)
         new_cell.__poss_vals.add(value)
 
         return new_cell
@@ -174,7 +181,8 @@ class Cell:
         if value not in self.__poss_vals:
             return self
 
-        new_cell = copy.deepcopy(self)
+        new_cell = Cell(self.__max_val, self.__x, self.__y, poss_vals=self.__poss_vals.copy())
+        #new_cell = copy.deepcopy(self)
         new_cell.__poss_vals.remove(value)
 
         return new_cell

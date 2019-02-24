@@ -14,6 +14,9 @@ from model.cell import Cell
 
 
 # This rule check for cells that only have one possible value
+# NOTE:  There is an issue where invalid puzzles will attempt
+# to set two adjacent cells to the same value, because the number
+# is the only possible number for both cells.
 def rule_one_possible(board: Board) -> List[Action]:
 
     action_arr = []
@@ -171,31 +174,25 @@ def rule_quadrant_col_and_row_elim_possible(board: Board) -> List[Action]:
 def _combination_exclusive_rule_helper(cells: Set[Cell]) -> List[Action]:
 
     action_arr = []
-    group_size = 2
 
-    while len(cells) > group_size:
+    remove_cells = set()
 
-        remove_cells = set()
+    for cell_com in itertools.combinations(cells, 2):
+        union_poss = set()
 
-        for cell_com in itertools.combinations(cells, 2):
-            union_poss = set()
+        for cell in cell_com:
+            union_poss = union_poss.union(cell.possible_vals())
 
-            for cell in cell_com:
-                union_poss = union_poss.union(cell.possible_vals())
+        if len(union_poss) == len(cell_com):
+            remove_cells = remove_cells.union(cell_com)
+            other_cells = cells.difference(cell_com)
 
-            if len(union_poss) == len(cell_com):
-                remove_cells = remove_cells.union(cell_com)
-                other_cells = cells.difference(cell_com)
+            for mod_cell in other_cells:
+                mod_poss = mod_cell.possible_vals()
 
-                for mod_cell in other_cells:
-                    mod_poss = mod_cell.possible_vals()
-
-                    for val in union_poss:
-                        if val in mod_poss:
-                            action_arr.append(ClearPossibleAction(mod_cell.x(), mod_cell.y(), val))
-
-        cells = cells.difference(remove_cells)
-        group_size += 1
+                for val in union_poss:
+                    if val in mod_poss:
+                        action_arr.append(ClearPossibleAction(mod_cell.x(), mod_cell.y(), val))
 
     return action_arr
 

@@ -97,13 +97,38 @@ class Board:
             .union(self.col_cells(y, filter_filled))\
             .union(self.quadrant_cells(x, y, filter_filled))
 
-    def all_cells(self) -> List[Cell]:
+    def all_cells(self, filter_filled: bool = False) -> List[Cell]:
         ret_arr = []
 
-        for row in self.__board:
-            ret_arr.extend(row)
+        if filter_filled:
+            for row in self.__board:
+                for cell in row:
+                    if cell.value() is None:
+                        ret_arr.add(cell)
+        else:
+            for row in self.__board:
+                ret_arr.extend(row)
 
         return ret_arr
+
+    def min_poss_cell(self):
+
+        min_cell_poss_count = -1
+        min_cell = None
+
+        for row in self.__board:
+            for cell in row:
+                if cell.value() is None:
+                    cell_poss_count = cell.possible_count()
+
+                    if min_cell is None:
+                        min_cell = cell
+                        min_cell_poss_count = cell_poss_count
+                    elif cell_poss_count < min_cell_poss_count:
+                        min_cell = cell
+                        min_cell_poss_count = cell_poss_count
+
+        return min_cell
 
     def is_solved(self):
         for row in self.__board:
