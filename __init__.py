@@ -1,8 +1,9 @@
 
 from gui.sudoku import SudokuApp
 import cProfile
-import model.board
-from model.solver import Solver
+import model.solver
+from model.board import Board
+import time
 
 def run_program():
 
@@ -36,6 +37,27 @@ def run_program():
 
     SudokuApp(board_str).run()
 
+
+def generate_puzzle():
+
+    start = time.time()
+
+    initial_actions = None
+
+    while initial_actions is None:
+        print('k')
+        initial_actions = model.solver.generate()
+
+    board = Board(9)
+    board = board.apply_actions(initial_actions)
+
+    board_str = str(board)
+    print(board_str)
+    print(time.time() - start)
+    SudokuApp(board_str).run()
+
+
 if __name__ == '__main__':
     #cProfile.run("run_program()")
-    run_program()
+    #run_program()
+    generate_puzzle()

@@ -163,6 +163,20 @@ class Board:
 
         return ret_board
 
+    def __str__(self):
+
+        result_str = ''
+
+        for row in self.__board:
+            for cell in row:
+                if cell.value() is None:
+                    result_str += '0'
+                else:
+                    result_str += cell.display_value()
+            result_str += ','
+
+        return result_str
+
 
 def create_board_from_values(max_val: int, board: List[List[int]] = None) -> Tuple[Board, List[InitialSetAction]]:
     empty_board = Board(max_val)
