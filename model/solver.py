@@ -60,7 +60,6 @@ class Solver:
 
         return self.__cur_board.is_solved()
 
-
     def print_taken_steps(self):
         for board, rule, action_list in self.__board_steps:
             print(rule, action_list)

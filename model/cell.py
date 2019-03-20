@@ -1,8 +1,7 @@
 
 from __future__ import annotations
-import copy
 import math
-from typing import List, Set
+from typing import List, Set, Optional
 
 from .board import Board
 
@@ -13,11 +12,12 @@ class Cell:
     __max_sqrt: int
     __x: int
     __y: int
-    __value: int = None
+    __value: int = None  # Note: X and Y coordinates are 0-indexes, whereas the values themselves start at 1.
     __poss_vals: Set[int] = None
     __is_initial: bool
 
-    def __init__(self, max_val: int, x: int, y: int, cur_val: int = None, poss_vals: Set[int] = None, is_initial: bool = False):
+    def __init__(self, max_val: int, x: int, y: int, cur_val: int = None,
+                 poss_vals: Set[int] = None, is_initial: bool = False):
 
         # Parameter Validation
         if max_val is None or max_val <= 1:
@@ -55,7 +55,7 @@ class Cell:
             return
 
         if poss_vals is None:
-            self.__poss_vals = set(x + 1 for x in range(max_val))
+            self.__poss_vals = set(x for x in range(1, max_val + 1))
         else:
             for x in poss_vals:
                 if x < 1:
@@ -95,7 +95,7 @@ class Cell:
             return chr(ord('0') + value)
 
     @staticmethod
-    def chr_to_val(char: str) -> int:
+    def chr_to_val(char: str) -> Optional[int]:
         chr_val = ord(char)
         if chr_val == ord('0'):
             return None
@@ -111,10 +111,16 @@ class Cell:
     def display_value(self) -> str:
         return self.val_to_chr(self.__value)
 
-    def possible_vals(self) -> Set[int]:
-        return self.__poss_vals.copy()
+    def possible_vals(self) -> Optional[Set[int]]:
+        if self.__poss_vals is not None:
+            return self.__poss_vals.copy()
+        else:
+            return None
 
     def has_possible_val(self, test_val: int) -> bool:
+        if self.__value is not None:
+            return False
+
         return test_val in self.__poss_vals
 
     def display_possible_vals(self) -> List[str]:
@@ -147,6 +153,7 @@ class Cell:
 
         return Cell(self.__max_val, self.__x, self.__y, is_initial=is_initial, cur_val=value)
 
+    # This method uses the given board to determine the list of possible values.
     def clear_value(self, board: Board) -> Cell:
         if self.__is_initial:
             raise ValueError("Cannot modify an initial Cell!")
@@ -165,8 +172,10 @@ class Cell:
         if value in self.__poss_vals:
             return self
 
+        if value < 1 or value > self.__max_val:
+            raise ValueError("Cannot set a possible value outside of value range!")
+
         new_cell = Cell(self.__max_val, self.__x, self.__y, poss_vals=self.__poss_vals.copy())
-        #new_cell = copy.deepcopy(self)
         new_cell.__poss_vals.add(value)
 
         return new_cell
@@ -182,7 +191,6 @@ class Cell:
             return self
 
         new_cell = Cell(self.__max_val, self.__x, self.__y, poss_vals=self.__poss_vals.copy())
-        #new_cell = copy.deepcopy(self)
         new_cell.__poss_vals.remove(value)
 
         return new_cell
