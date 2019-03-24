@@ -19,7 +19,7 @@ class SudokuApp(App):
 
         s = Solver(self.__board, self.__init_actions, False)
 
-        s.solve()
+        #s.solve()
 
         board = s.get_board()
 
@@ -29,4 +29,4 @@ class SudokuApp(App):
 
         s.print_taken_steps()
 
-        return BoardView(board)
+        return BoardView(self.__board)

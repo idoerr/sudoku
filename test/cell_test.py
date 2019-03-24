@@ -263,5 +263,5 @@ class CellTest(TestCase):
         with self.assertRaises(ValueError):
             c.clear_possible_value(2)
 
-    
+
 

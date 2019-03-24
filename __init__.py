@@ -22,20 +22,22 @@ def run_program():
 
     # '060030009,730000051,500008000,100062000,009000700,000970005,000300004,410000076,800050010'
     # '000400650,000087031,004500000,710000903,000000000,305000028,000001700,280970000,073005000'
-    # '000001340,485000000,001089000,000500709,200000001,709004000,000920800,000000567,036700000',
-    '800000000,003600000,070090200,050007000,000045700,000100030,001000068,008500010,090000400' # Unsolved
+    #'000001340,485000000,001089000,000500709,200000001,709004000,000920800,000000567,036700000',
+    #'800000000,003600000,070090200,050007000,000045700,000100030,001000068,008500010,090000400' # Unsolved
     #'000090640,000003007,004107008,190800400,040030080,005004069,400306200,500200000,021050000'
+
+    'A8400013000002C0000080000DG000010G0000000504080000E00000900007400007E0090000D482100000000G700000000000D0000005E00000000BA0F000090700000020800000000000500A40060F000000000000000000000A00000FC000EF000000070090G0702000C0F000006B00007080000G00000000000000000070'
     ]
 
     board_str = board_str[0]
-    #board, init_actions = model.board.create_board_from_string(board_str)
+    board, init_actions = model.board.create_board_from_string(board_str)
 
-    #s = Solver(board, init_actions, False)
+    s = model.solver.Solver(board, init_actions, False)
 
-    #s.solve()
+    s.solve()
 
 
-    SudokuApp(board_str).run()
+    #SudokuApp(board_str).run()
 
 
 def generate_puzzle():
@@ -44,11 +46,13 @@ def generate_puzzle():
 
     initial_actions = None
 
+    max_val = 16
+
     while initial_actions is None:
         print('k')
-        initial_actions = model.solver.generate()
+        initial_actions = model.solver.generate(max_val)
 
-    board = Board(9)
+    board = Board(max_val)
     board = board.apply_actions(initial_actions)
 
     board_str = str(board)
@@ -58,6 +62,6 @@ def generate_puzzle():
 
 
 if __name__ == '__main__':
-    #cProfile.run("run_program()")
+    cProfile.run("run_program()")
     #run_program()
-    generate_puzzle()
+    #generate_puzzle()

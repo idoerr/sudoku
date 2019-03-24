@@ -2,6 +2,7 @@
 from model.rules import *
 from typing import Optional
 import random
+import time
 
 class Solver:
 
@@ -89,15 +90,19 @@ def _random_initial_val(board: Board) -> InitialSetAction:
         if cell.value() is None:
             poss_vals = list(cell.possible_vals())
 
-            index = random.randint(0, len(poss_vals) - 1)
+            if len(poss_vals) == 1:
+                index = 0
+            else:
+                index = random.randint(0, len(poss_vals) - 1)
             set_val = poss_vals[index]
 
             return InitialSetAction(x, y, set_val)
 
-
 def _solve_helper(board: Board, check_unique: bool) -> List[Tuple[str, List[Action]]]:
 
     rule_action_list : List[Tuple[str, List[Action]]] = []
+
+    start_time = time.time()
 
     while not board.is_solved():
         rule, next_actions = _get_next_steps(board)
@@ -114,7 +119,12 @@ def _solve_helper(board: Board, check_unique: bool) -> List[Tuple[str, List[Acti
                 rule = "solver_try_value"
                 actions_found = False
 
+                #print(min_cell)
+
                 for x in poss_vals:
+
+                    if time.time() - start_time > 60:
+                        break
 
                     next_action = [SetAction(min_cell.x(), min_cell.y(), x)]
 
@@ -150,23 +160,24 @@ def _solve_helper(board: Board, check_unique: bool) -> List[Tuple[str, List[Acti
 
     return rule_action_list
 
-def generate() -> Optional[List[Action]]:
+
+def generate(max_val: int) -> Optional[List[Action]]:
 
     # Online research suggests that the minimum number of filled spaces for a 9x9 sudoku board is 17.
     # Thus we are going to generate that many spaces before attempting the check for uniqueness.
 
-    genboard = Board(9)
+    genboard = Board(max_val)
     initial_actions = []
 
     # First fill in 9 spots, before attempting to apply rules between generation.
-    for i in range(9):
+    for i in range(max_val - 1):
         set_action = _random_initial_val(genboard)
 
         initial_actions.append(set_action)
         genboard = genboard.apply_actions([set_action])
 
     # Now generate up to 17 numbers, using rules between each step.
-    for i in range(8):
+    for i in range(max_val):
 
         while True:
             rule, rule_actions = _get_next_steps(genboard)
@@ -176,12 +187,18 @@ def generate() -> Optional[List[Action]]:
             else:
                 break
 
+        if genboard.is_solved():
+            return initial_actions
+
         set_action = _random_initial_val(genboard)
         initial_actions.append(set_action)
         genboard = genboard.apply_actions([set_action])
 
     # Now we need to do a uniqueness check before each generation
     while True:
+
+        print(len(initial_actions))
+        print(','.join(''.join(x) for x in genboard.display_board()))
 
         while True:
             rule, rule_actions = _get_next_steps(genboard)

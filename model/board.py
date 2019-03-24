@@ -46,7 +46,10 @@ class Board:
             board_row = self.__board[i]
 
             for j in range(self.__max_val):
-                ret_row.append(board_row[j].display_value())
+                display_val = board_row[j].display_value()
+                if display_val == "":
+                    display_val = "0"
+                ret_row.append(display_val)
 
         return ret_board
 

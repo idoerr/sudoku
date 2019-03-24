@@ -9,12 +9,14 @@ from model.action import *
 from gui.texture_util import *
 
 
+# The CellView class encapsulates a cell object, and is responsible for drawing them on a board.
 # NOTE: a different parent class may be applicable, but using do_layout method for drawing.
 class CellView(GridLayout):
 
     __cell: Cell = None
     __actions: List[Action] = []
 
+    # Kivy colors are rgba, as floats between 0 and 1.
     __black = (0, 0, 0, 1)
     __grey = (0.4, 0.4, 0.4, 1)
     __red = (1, 0, 0, 1)
@@ -41,11 +43,30 @@ class CellView(GridLayout):
     def get_cell(self):
         return self.__cell
 
+    def is_in_bounds(self, x: int, y: int):
+
+        min_x = self.x
+        max_x = self.x + self.width
+
+        print(self.__cell.x(), self.__cell.y(), min_x, max_x, x)
+
+        min_y = self.y
+        max_y = self.y + self.height
+
+        if x <= min_x or x >= max_x:
+            return False
+
+        if y <= min_y or y >= max_y:
+            return False
+
+        return True
+
     def add_draw_action(self, action):
         self.__actions.append(action)
 
         self._trigger_layout()
 
+    # This is the worker method for actually drawing a letter of the specified dimensions.
     def __display_text(self, x: int, y: int, width: int, height: int, text: str, draw_color):
         num_texture = get_text_texture(width, height, text)
 
@@ -75,7 +96,8 @@ class CellView(GridLayout):
         self.__display_text(draw_x, draw_y, cell_size, cell_size, Cell.val_to_chr(val), draw_color)
 
     def __draw_action(self, action: Action):
-
+        # This draws a saved action in the cell area.
+        # Set actions are green, clear actions are red.
         draw_color = self.__green
 
         if action.__class__ == ClearAction or action.__class__ == ClearPossibleAction:
@@ -95,6 +117,8 @@ class CellView(GridLayout):
 
                 Rectangle(pos=self.pos, size=self.size)
 
+        # Note: Canvas is a set of draw actions, and each canvas has three sections, before, normal and after
+        # We draw the letter in the normal space.
         self.canvas.clear()
 
         if self.__cell.value() is not None:
@@ -103,6 +127,7 @@ class CellView(GridLayout):
             for val in self.__cell.possible_vals():
                 self.__draw_possible_val(val, self.__black)
 
+        # We can have multiple actions of set possible value.
         for action in self.__actions:
             self.__draw_action(action)
 
