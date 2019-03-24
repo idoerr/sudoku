@@ -23,8 +23,8 @@ def rule_one_possible(board: Board) -> List[Action]:
 
     for cell in board.all_cells():
         if cell.possible_count() == 1:
-            result_val = cell.possible_vals().pop()
-            action_arr.append(SetAction(cell.x(), cell.y(), result_val))
+            for result_val in cell.possible_vals():
+                action_arr.append(SetAction(cell.x(), cell.y(), result_val))
 
     return action_arr
 
@@ -52,8 +52,8 @@ def _rule_exclusive_set(cell_list: Set[Cell]) -> List[Action]:
             cur_cell_poss = cur_cell_poss.difference(temp_poss)
 
         if len(cur_cell_poss) == 1:
-            result_val = cur_cell_poss.pop()
-            ret_arr.append(SetAction(cell.x(), cell.y(), result_val))
+            for result_val in cur_cell_poss:
+                ret_arr.append(SetAction(cell.x(), cell.y(), result_val))
 
     return ret_arr
 
@@ -235,7 +235,7 @@ rule_set = [
     rule_row_exclusive,
     rule_col_exclusive,
     rule_quadrant_exclusive,
-    rule_quadrant_col_and_row_elim_possible,
-    combination_exclusive_rowcol_rule,
-    combination_exclusive_quadrant_rule
+    #rule_quadrant_col_and_row_elim_possible,
+    #combination_exclusive_rowcol_rule,
+    #combination_exclusive_quadrant_rule
 ]

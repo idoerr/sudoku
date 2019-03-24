@@ -84,9 +84,9 @@ class CellTest(TestCase):
 
     def test_both_set(self):
         with self.assertRaises(ValueError):
-            Cell(9, 0, 0, cur_val=1, poss_vals=set())
+            Cell(9, 0, 0, cur_val=1, poss_vals=frozenset())
         with self.assertRaises(ValueError):
-            Cell(9, 0, 0, cur_val=1, poss_vals=set(), is_initial=True)
+            Cell(9, 0, 0, cur_val=1, poss_vals=frozenset(), is_initial=True)
 
     def test_neither_set(self):
         c = Cell(9, 0, 0)
@@ -104,7 +104,7 @@ class CellTest(TestCase):
         with self.assertRaises(ValueError):
             Cell(9, 0, 0, is_initial=True)
         with self.assertRaises(ValueError):
-            Cell(9, 0, 0, poss_vals=set(), is_initial=True)
+            Cell(9, 0, 0, poss_vals=frozenset(), is_initial=True)
 
         c = Cell(9, 0, 0, 1, is_initial=True)
         self.assertTrue(c.is_initial())
@@ -115,22 +115,22 @@ class CellTest(TestCase):
     def test_possible_values(self):
 
         for x in self.__test_maxes:
-            vals = set(range(1, x + 1))
+            vals = frozenset(range(1, x + 1))
             Cell(x, 0, 0, poss_vals=vals)
 
             with self.assertRaises(ValueError):
-                vals = set(range(0, x + 1))
+                vals = frozenset(range(0, x + 1))
                 Cell(x, 0, 0, poss_vals=vals)
 
             with self.assertRaises(ValueError):
-                vals = set(range(1, x + 2))
+                vals = frozenset(range(1, x + 2))
                 Cell(x, 0, 0, poss_vals=vals)
 
-        s = {2, 3, 4}
+        s = frozenset({2, 3, 4})
         c = Cell(9, 0, 0, poss_vals=s)
         self.assertEqual(s, c.possible_vals())
 
-        s = {4, 2, 9}
+        s = frozenset({4, 2, 9})
         c = Cell(9, 0, 0, poss_vals=s)
         self.assertEqual(s, c.possible_vals())
 
@@ -156,7 +156,7 @@ class CellTest(TestCase):
         self.assertEqual(-1, c.possible_count())
         self.assertIsNone(c.possible_vals())
 
-        c = Cell(9, 0, 0, poss_vals={2,3,4})
+        c = Cell(9, 0, 0, poss_vals=frozenset({2,3,4}))
 
         self.assertIsNone(c.value())
         self.assertEqual({2,3,4}, c.possible_vals())
@@ -165,7 +165,7 @@ class CellTest(TestCase):
     def test_possible_val_mod(self):
         # Change the set returned by the possible val method, make sure it stays the same.
 
-        c = Cell(9, 0, 0, poss_vals={2,3,4})
+        c = Cell(9, 0, 0, poss_vals=frozenset({2,3,4}))
 
         ret_set = c.possible_vals()
         ret_set.add(5)
@@ -177,7 +177,7 @@ class CellTest(TestCase):
 
     def test_has_possible_val(self):
 
-        test_set = {2,3,4}
+        test_set = frozenset({2,3,4})
         c = Cell(9, 0, 0, poss_vals=test_set)
 
         for i in range(1, 10):
@@ -196,7 +196,7 @@ class CellTest(TestCase):
 
     def test_set_possible_value(self):
 
-        c = Cell(9, 0, 0, poss_vals={1})
+        c = Cell(9, 0, 0, poss_vals=frozenset({1}))
 
         c2 = c.set_possible_value(2)
         self.assertEqual({1}, c.possible_vals())
@@ -222,7 +222,7 @@ class CellTest(TestCase):
 
     def test_clear_possible_value(self):
 
-        c = Cell(9, 0, 0, poss_vals={2, 3, 4})
+        c = Cell(9, 0, 0, poss_vals=frozenset({2, 3, 4}))
 
         c2 = c
 

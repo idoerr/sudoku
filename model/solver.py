@@ -98,11 +98,14 @@ def _random_initial_val(board: Board) -> InitialSetAction:
 
             return InitialSetAction(x, y, set_val)
 
+_itercount = 0
+
 def _solve_helper(board: Board, check_unique: bool) -> List[Tuple[str, List[Action]]]:
 
     rule_action_list : List[Tuple[str, List[Action]]] = []
 
     start_time = time.time()
+    global _itercount
 
     while not board.is_solved():
         rule, next_actions = _get_next_steps(board)
@@ -122,9 +125,11 @@ def _solve_helper(board: Board, check_unique: bool) -> List[Tuple[str, List[Acti
                 #print(min_cell)
 
                 for x in poss_vals:
+                    _itercount += 1
 
-                    if time.time() - start_time > 60:
-                        break
+                    #if time.time() - start_time > 60:
+                    #    print(_itercount)
+                    #    break
 
                     next_action = [SetAction(min_cell.x(), min_cell.y(), x)]
 
@@ -151,6 +156,7 @@ def _solve_helper(board: Board, check_unique: bool) -> List[Tuple[str, List[Acti
                         if not check_unique:
                             return rule_action_list
 
+                print(_itercount)
                 return rule_action_list
 
         else:

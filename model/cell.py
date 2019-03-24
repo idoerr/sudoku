@@ -1,7 +1,7 @@
 
 from __future__ import annotations
 import math
-from typing import List, Set, Optional
+from typing import List, FrozenSet, Optional
 
 from .board import Board
 
@@ -13,11 +13,11 @@ class Cell:
     __x: int
     __y: int
     __value: int = None  # Note: X and Y coordinates are 0-indexes, whereas the values themselves start at 1.
-    __poss_vals: Set[int] = None
+    __poss_vals: FrozenSet[int] = None
     __is_initial: bool
 
     def __init__(self, max_val: int, x: int, y: int, cur_val: int = None,
-                 poss_vals: Set[int] = None, is_initial: bool = False):
+                 poss_vals: FrozenSet[int] = None, is_initial: bool = False):
 
         # Parameter Validation
         if max_val is None or max_val <= 1:
@@ -55,7 +55,7 @@ class Cell:
             return
 
         if poss_vals is None:
-            self.__poss_vals = set(x for x in range(1, max_val + 1))
+            self.__poss_vals = frozenset(x for x in range(1, max_val + 1))
         else:
             for x in poss_vals:
                 if x < 1:
@@ -111,9 +111,9 @@ class Cell:
     def display_value(self) -> str:
         return self.val_to_chr(self.__value)
 
-    def possible_vals(self) -> Optional[Set[int]]:
+    def possible_vals(self) -> Optional[FrozenSet[int]]:
         if self.__poss_vals is not None:
-            return self.__poss_vals.copy()
+            return self.__poss_vals
         else:
             return None
 
@@ -175,8 +175,7 @@ class Cell:
         if value < 1 or value > self.__max_val:
             raise ValueError("Cannot set a possible value outside of value range!")
 
-        new_cell = Cell(self.__max_val, self.__x, self.__y, poss_vals=self.__poss_vals.copy())
-        new_cell.__poss_vals.add(value)
+        new_cell = Cell(self.__max_val, self.__x, self.__y, poss_vals=self.__poss_vals.union({value}))
 
         return new_cell
 
@@ -190,8 +189,7 @@ class Cell:
         if value not in self.__poss_vals:
             return self
 
-        new_cell = Cell(self.__max_val, self.__x, self.__y, poss_vals=self.__poss_vals.copy())
-        new_cell.__poss_vals.remove(value)
+        new_cell = Cell(self.__max_val, self.__x, self.__y, poss_vals=self.__poss_vals.difference({value}))
 
         return new_cell
 
@@ -212,6 +210,6 @@ class Cell:
             if val is not None:
                 new_poss.remove(val)
 
-        new_cell = Cell(self.__max_val, self.__x, self.__y, poss_vals=new_poss)
+        new_cell = Cell(self.__max_val, self.__x, self.__y, poss_vals=frozenset(new_poss))
 
         return new_cell
