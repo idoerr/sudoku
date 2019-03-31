@@ -27,8 +27,8 @@ def solve_lilmat(lil_mat, solution=[]):
                 if col_to_delete != 0:
                     del_cols.append(col_to_delete)
 
-                for row_to_delete, col_to_ignore in zip(*lil_mat[:,del_cols].nonzero()):
-                    del_rows.add(row_to_delete)
+            for row_to_delete, col_to_ignore in zip(*lil_mat[:,del_cols].nonzero()):
+                del_rows.add(row_to_delete)
 
             del_rows = sorted(list(del_rows))
 

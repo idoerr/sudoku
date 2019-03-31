@@ -5,7 +5,9 @@ from enum import Enum
 import itertools
 import math
 from model.cell import Cell
+import numpy as np
 import scipy.sparse as spsp
+
 
 class ConstraintType(Enum):
     RowCol = 0  # Constraint that the overlapping row and column numbers have the same value
@@ -16,9 +18,7 @@ class ConstraintType(Enum):
 
 class DictAlgorithmXBoard:
 
-    __selected_indexes: List[int]
-
-    #__constraint_matrix: spsp.lilmat
+    #  _constraint_matrix: spsp.lilmat
 
     def row_count(self):
         return self.__max_val ** 3
@@ -30,118 +30,169 @@ class DictAlgorithmXBoard:
         return self.__max_square * x + self.__max_val * y + poss_val
 
     def col_for_constraint(self, x: int, y: int, constraint: ConstraintType):
-        return self.__max_square * int(constraint) + self.__max_sqrt * x + y
+        return self.__max_square * constraint.value + self.__max_sqrt * x + y
 
     def get_cell(self, x: int, y: int):
 
-        start_index = self.row_for_coords(x, y, 0)
+        start_index = 1 + self.row_for_coords(x, y, 0)
 
-        for i in range(self.__max_val):
-            cur_index = start_index + i
+        for i, cur_index in enumerate(range(start_index, start_index + self.__max_val)):
+            if cur_index in self.__selected_rows:
+                return Cell(self.__max_val, x, y, i + 1)
 
+        avail_indexes = self.__constraint_matrix.getcol(0).todense()
 
+        end_index = start_index + self.__max_val
 
-    def __init__(self, max_val: int, constraint_matrix: Set[Tuple[int,int,int,int,int,ConstraintType]] = None, avail_rows: Set[Tuple[int,int,int]] = None, avail_cols: Set[Tuple[int,int,ConstraintType]] = None, selected_rows: Set[Tuple[int,int,int]] = None):
+        avail_list = np.where((avail_indexes >= start_index) & (avail_indexes < end_index))
+
+        poss_val_list = []
+        for val in np.nditer(avail_indexes[avail_list]):
+            poss_val_list.append(val - start_index + 1)
+
+        return Cell(self.__max_val, x, y, poss_vals=frozenset(poss_val_list))
+
+    def __init__(self, max_val: int, constraint_matrix = None, selected_rows: List[int] = None):
 
         self.__max_val = max_val
         self.__max_square = max_val * max_val
         self.__max_sqrt = 1 if max_val == 2 else math.sqrt(max_val)
 
         if constraint_matrix is None:
-            constraint_matrix = set()
-            self.c = constraint_matrix
+
+            row_indexes = np.repeat(range(self.row_count()), 5)
+            col_indexes = []
+            value_list = []
+
+            ones_list = [1,1,1,1]
+            for i in range(1, self.row_count() + 1):
+                value_list.append(i)
+                value_list.extend(ones_list)
 
             for row, col, poss_val in itertools.product(range(max_val), range(max_val), range(max_val)):
-                constraint_matrix.add((row,col,poss_val,row,col, ConstraintType.RowCol))
-                constraint_matrix.add((row,col,poss_val,row,poss_val,ConstraintType.RowNum))
-                constraint_matrix.add((row,col,poss_val,col,poss_val,ConstraintType.ColNum))
 
+                col_indexes.append(0)
+
+                # RowCol Constraint
+                col_offset = row * max_val + col
+                col_index = 1 + ConstraintType.RowCol.value * self.__max_square + col_offset
+                col_indexes.append(col_index)
+
+                # RowNum Constraint
+                col_offset = row * max_val + poss_val
+                col_index = 1 + ConstraintType.RowNum.value * self.__max_square + col_offset
+                col_indexes.append(col_index)
+
+                # ColNum Constraint
+                col_offset = col * max_val + poss_val
+                col_index = 1 + ConstraintType.ColNum.value * self.__max_square + col_offset
+                col_indexes.append(col_index)
+
+                #QuadNum Constraint
                 quad_num = self.__max_sqrt * (row // self.__max_sqrt) + col // self.__max_sqrt
-                constraint_matrix.add((row,col,poss_val,quad_num,poss_val,ConstraintType.QuadNum))
+                col_offset = int(quad_num) * max_val + poss_val
+                col_index = 1 + ConstraintType.QuadNum.value * self.__max_square + col_offset
+                col_indexes.append(col_index)
 
-        if avail_rows is None:
-            avail_rows = set()
+            value_list = np.array(value_list, dtype='i')
+            constraint_coo = spsp.coo_matrix((value_list, (row_indexes, col_indexes)), dtype='i')
+            constraint_csr = spsp.csr_matrix(constraint_coo)
 
-            for row,col,poss_val in itertools.product(range(max_val),range(max_val),range(max_val)):
-                avail_rows.add((row,col,poss_val))
-
-            self.__avail_rows = avail_rows
+            self.__constraint_matrix = constraint_csr
         else:
-            self.__avail_rows = avail_rows.copy()
-
-        if avail_cols is None:
-            avail_cols = set()
-
-            for row,col,constraint in itertools.product(range(max_val), range(max_val), ConstraintType):
-                avail_cols.add((row,col,constraint))
-
-            self.__avail_cols = avail_cols
-        else:
-            self.__avail_cols = avail_cols.copy()
+            self.__constraint_matrix = constraint_matrix
 
         if selected_rows is None:
-            self.__selected_rows = set()
+            self.__selected_rows = []
         else:
             self.__selected_rows = selected_rows.copy()
 
-    def get_cell(self, x: int, y: int) -> Cell:
+    def set_value(self, x: int, y: int, value: int):
 
-        for poss_val in range(self.__max_val):
-            if (x,y,poss_val) in self.__selected_rows:
-                return Cell(self.__max_val, x, y, poss_val + 1)
+        row_index = self.row_for_coords(x, y, value)
+        avail_rows = self.__constraint_matrix.getcol(0).todense()
 
-        poss_val_list = []
-        for poss_val in range(self.__max_val):
-            if (x,y,poss_val) in self.__avail_rows:
-                poss_val_list.append(poss_val + 1)
+        matrix_index = np.where(row_index == avail_rows)[0][0]
 
-        return Cell(self.__max_val, x, y, poss_vals=frozenset(poss_val_list))
+        self.__selected_rows.append(row_index)
+
+        sub_matrix = _select_row_from_matrix(self.__constraint_matrix, matrix_index)
+
+        self.__constraint_matrix = sub_matrix
+
+    def solve(self):
+
+        solution_generator = _solve_worker(self.__constraint_matrix, self.__selected_rows.copy())
+
+        try:
+            base_solution = next(solution_generator)
+        except StopIteration:
+            raise ValueError("Sudoku puzzle doesn't have a valid solution!")
+
+        return base_solution
+
+
+def _select_row_from_matrix(mod_matrix, row_to_select: int):
+
+    del_cols = []
+    del_rows = set()
+
+    for row_ignore, col_to_delete in zip(*mod_matrix[row_to_select].nonzero()):
+
+        if col_to_delete != 0:
+            del_cols.append(col_to_delete)
+
+    for row_to_delete, col_to_ignore in zip(*mod_matrix[:,del_cols].nonzero()):
+        del_rows.add(row_to_delete)
+
+    del_rows = sorted(list(del_rows))
+
+    keep_cols = [i for i in range(mod_matrix.shape[1]) if i not in del_cols]
+    keep_rows = [i for i in range(mod_matrix.shape[0]) if i not in del_rows]
+
+    sub_mat = mod_matrix[keep_rows,:][:,keep_cols]
+    return sub_mat
+
+
+def _solve_worker(mod_matrix, solution=[]):
+    if mod_matrix.getnnz() == 0:
+        yield(solution.copy())
+    else:
+        col_counts = list(mod_matrix.getnnz(0)[1:])
+
+        min_col = col_counts.index(min(col_counts)) + 1
+
+        for row_to_select, col_ignore in zip(*mod_matrix[:,min_col].nonzero()):
+
+            row_orig_index = mod_matrix[row_to_select, 0]
+            solution.append(row_orig_index)
+
+            sub_matrix = _select_row_from_matrix(mod_matrix, row_to_select)
+
+            for s in _solve_worker(sub_matrix, solution):
+                yield(s)
+
+            solution.pop()
 
 
 if __name__ == '__main__':
 
-    max_val = 9
-    links = DictAlgorithmXBoard(max_val)
-    c = links.c
+    import time
+    start = time.time()
 
-    top_row = "ROW     "
-    top_col = "COL     "
+    max_val = 25
+    board = DictAlgorithmXBoard(max_val)
 
-    c_col = list(ConstraintType)
+    board.set_value(0, 0, 3)
+    board.set_value(2, 0, 2)
 
-    for constraint, row, col in itertools.product([1,2,3,4], range(max_val), range(max_val)):
-        if row == 0 and col == 0:
-            top_row += "|"
-            top_col += "|"
+    print(board.get_cell(0, 0))
+    print(board.get_cell(1, 0))
 
-        if col == 0:
-            top_row += str(row)
-        else:
-            top_row += " "
+    solution = board.solve()
+    print(len(solution))
 
-        top_col += str(col)
-
-    print(top_row)
-    print(top_col)
-
-    for row,col, poss_val in itertools.product(range(max_val),range(max_val), range(max_val)):
-        cur_row = "r" + str(row) +",c" + str(col) + "#" + str(poss_val) + " "
-        for constraint,x,y in itertools.product(c_col, range(max_val),range(max_val)):
-            if x == 0 and y == 0:
-                cur_row += "|"
-            if (row,col,poss_val,x,y,constraint) in c:
-                cur_row += str(poss_val)
-            else:
-                cur_row += " "
-
-        if poss_val == 0:
-            print(" " * 8 + "_" * (len(c_col) * max_val * max_val + len(c_col)))
-        print(cur_row)
-
-    print(links.get_cell(4, 4))
-
-
-
+    print(time.time() - start)
 
 class Column_Head:
 
