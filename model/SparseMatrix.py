@@ -18,40 +18,6 @@ class ConstraintType(Enum):
 
 class DictAlgorithmXBoard:
 
-    #  _constraint_matrix: spsp.lilmat
-
-    def row_count(self):
-        return self.__max_val ** 3
-
-    def col_count(self):
-        return self.__max_val ** 2 * 4
-
-    def row_for_coords(self, x: int, y: int, poss_val: int):
-        return self.__max_square * x + self.__max_val * y + poss_val
-
-    def col_for_constraint(self, x: int, y: int, constraint: ConstraintType):
-        return self.__max_square * constraint.value + self.__max_sqrt * x + y
-
-    def get_cell(self, x: int, y: int):
-
-        start_index = 1 + self.row_for_coords(x, y, 0)
-
-        for i, cur_index in enumerate(range(start_index, start_index + self.__max_val)):
-            if cur_index in self.__selected_rows:
-                return Cell(self.__max_val, x, y, i + 1)
-
-        avail_indexes = self.__constraint_matrix.getcol(0).todense()
-
-        end_index = start_index + self.__max_val
-
-        avail_list = np.where((avail_indexes >= start_index) & (avail_indexes < end_index))
-
-        poss_val_list = []
-        for val in np.nditer(avail_indexes[avail_list]):
-            poss_val_list.append(val - start_index + 1)
-
-        return Cell(self.__max_val, x, y, poss_vals=frozenset(poss_val_list))
-
     def __init__(self, max_val: int, constraint_matrix = None, selected_rows: List[int] = None):
 
         self.__max_val = max_val
@@ -88,7 +54,7 @@ class DictAlgorithmXBoard:
                 col_index = 1 + ConstraintType.ColNum.value * self.__max_square + col_offset
                 col_indexes.append(col_index)
 
-                #QuadNum Constraint
+                # QuadNum Constraint
                 quad_num = self.__max_sqrt * (row // self.__max_sqrt) + col // self.__max_sqrt
                 col_offset = int(quad_num) * max_val + poss_val
                 col_index = 1 + ConstraintType.QuadNum.value * self.__max_square + col_offset
@@ -106,6 +72,59 @@ class DictAlgorithmXBoard:
             self.__selected_rows = []
         else:
             self.__selected_rows = selected_rows.copy()
+
+    def row_count(self):
+        return self.__max_val ** 3
+
+    def col_count(self):
+        return self.__max_val ** 2 * 4
+
+    def row_for_coords(self, x: int, y: int, poss_val: int):
+        return self.__max_square * x + self.__max_val * y + poss_val
+
+    def col_for_constraint(self, x: int, y: int, constraint: ConstraintType):
+        return self.__max_square * constraint.value + self.__max_sqrt * x + y
+
+    def get_cell(self, x: int, y: int):
+
+        start_index = 1 + self.row_for_coords(x, y, 0)
+
+        for i, cur_index in enumerate(range(start_index, start_index + self.__max_val)):
+            if cur_index in self.__selected_rows:
+                return Cell(self.__max_val, x, y, i + 1)
+
+        avail_indexes = self.__constraint_matrix.getcol(0).todense()
+
+        end_index = start_index + self.__max_val
+
+        avail_list = np.where((avail_indexes >= start_index) & (avail_indexes < end_index))
+
+        poss_val_list = []
+        for val in np.nditer(avail_indexes[avail_list]):
+            poss_val_list.append(val - start_index + 1)
+
+        return Cell(self.__max_val, x, y, poss_vals=frozenset(poss_val_list))
+
+    def __str__(self):
+
+        output_arr = []
+
+        for row_num in sorted(self.__selected_rows):
+
+            row_num -= 1
+
+            str_index = row_num // self.__max_val
+            while len(output_arr) < str_index:
+                output_arr.append('0')
+
+            poss_val = row_num % self.__max_val + 1
+
+            output_arr.append(Cell.val_to_chr(poss_val))
+
+        while len(output_arr) < self.__max_square:
+            output_arr.append('0')
+
+        return ''.join(output_arr)
 
     def set_value(self, x: int, y: int, value: int):
 
@@ -145,7 +164,7 @@ def _select_row_from_matrix(mod_matrix, row_to_select: int):
     for row_to_delete, col_to_ignore in zip(*mod_matrix[:,del_cols].nonzero()):
         del_rows.add(row_to_delete)
 
-    del_rows = sorted(list(del_rows))
+    # del_rows = sorted(list(del_rows))
 
     keep_cols = [i for i in range(mod_matrix.shape[1]) if i not in del_cols]
     keep_rows = [i for i in range(mod_matrix.shape[0]) if i not in del_rows]
@@ -180,11 +199,13 @@ if __name__ == '__main__':
     import time
     start = time.time()
 
-    max_val = 25
+    max_val = 4
     board = DictAlgorithmXBoard(max_val)
 
-    board.set_value(0, 0, 3)
+    board.set_value(0, 0, 4)
     board.set_value(2, 0, 2)
+
+    print(board)
 
     print(board.get_cell(0, 0))
     print(board.get_cell(1, 0))

@@ -7,7 +7,6 @@ class DancingBoard:
 
     __max_val: int
     __sudoku_hit_matrix: Set[Tuple[int, int, int, str]] # (x, y, poss_val, rule)
-    __
 
     def __init__(self, max_val: int, init_struct: Set[Tuple[int, int, int, str]]=None, selected_rows: Set[Tuple[int, int, int]]=None, selected_cols: Set[Tuple[int, int, str]]=None):
 
